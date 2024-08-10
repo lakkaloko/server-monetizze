@@ -11,8 +11,14 @@ const filePath = path.join(__dirname, 'dados.csv');
 
 // Função para adicionar dados à planilha
 const appendToCSV = (data) => {
-    const { nome, valor } = data; // Ajuste conforme os dados esperados
-    const linha = `${nome},${valor}\n`;
+    // Extraindo informações específicas do JSON
+    const nomeComprador = data.comprador.nome || 'N/A';
+    const valorVenda = data.venda.valor || '0.00';
+    const produtoNome = data.produto.nome || 'Produto Desconhecido';
+
+    // Criando a linha para o CSV
+    const linha = `${nomeComprador},${valorVenda},${produtoNome}\n`;
+
     fs.appendFile(filePath, linha, (err) => {
         if (err) throw err;
         console.log('Dados salvos na planilha.');
@@ -31,10 +37,6 @@ app.post('/postback', (req, res) => {
     console.log('Dados recebidos:', req.body); // Log para depuração
 
     const data = req.body;
-
-    if (!data.nome || !data.valor) {
-        return res.status(400).send('Dados inválidos');
-    }
 
     // Salvar os dados na planilha
     appendToCSV(data);
