@@ -1,4 +1,3 @@
-require('dotenv').config(); // Opcional se você estiver usando um arquivo .env para testes locais
 const { google } = require('googleapis');
 const express = require('express');
 const bodyParser = require('body-parser');
