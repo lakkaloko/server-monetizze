@@ -1,53 +1,59 @@
+require('dotenv').config(); // Opcional se você estiver usando um arquivo .env para testes locais
+const { google } = require('googleapis');
 const express = require('express');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configurar o diretório para salvar a planilha
-const filePath = path.join(__dirname, 'dados.csv');
+// Autenticação com a Service Account usando a variável de ambiente GOOGLE_CREDENTIALS
+const auth = new google.auth.GoogleAuth({
+    credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
 
-// Função para adicionar dados à planilha
-const appendToCSV = (data) => {
-    // Extraindo informações específicas do JSON
+const sheets = google.sheets({ version: 'v4', auth });
+
+// Carregar o ID da planilha da variável de ambiente
+const spreadsheetId = process.env.SPREADSHEET_ID;
+
+const appendToGoogleSheet = async (data) => {
     const nomeComprador = data.comprador.nome || 'N/A';
     const valorVenda = data.venda.valor || '0.00';
     const produtoNome = data.produto.nome || 'Produto Desconhecido';
 
-    // Criando a linha para o CSV
-    const linha = `${nomeComprador},${valorVenda},${produtoNome}\n`;
+    const request = {
+        spreadsheetId: spreadsheetId,
+        range: 'Sheet1!A:C', // Substitua pelo intervalo que deseja atualizar
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        resource: {
+            values: [
+                [nomeComprador, valorVenda, produtoNome],
+            ],
+        },
+        auth: auth,
+    };
 
-    fs.appendFile(filePath, linha, (err) => {
-        if (err) throw err;
-        console.log('Dados salvos na planilha.');
-    });
+    try {
+        const response = await sheets.spreadsheets.values.append(request);
+        console.log(`${response.data.updates.updatedCells} células atualizadas.`);
+    } catch (err) {
+        console.error('Erro ao inserir dados na planilha do Google:', err);
+    }
 };
 
 app.use(bodyParser.json());
 
-// Rota raiz
-app.get('/', (req, res) => {
-    res.send('Servidor está funcionando. Use /postback para enviar dados e /download para baixar a planilha.');
-});
-
-// Endpoint para receber postback
 app.post('/postback', (req, res) => {
-    console.log('Dados recebidos:', req.body); // Log para depuração
+    console.log('Dados recebidos:', req.body);
 
     const data = req.body;
 
-    // Salvar os dados na planilha
-    appendToCSV(data);
+    // Enviar os dados para o Google Sheets
+    appendToGoogleSheet(data);
 
-    // Responder ao postback
     res.status(200).send('Dados recebidos com sucesso');
-});
-
-// Endpoint para download da planilha
-app.get('/download', (req, res) => {
-    res.download(filePath, 'dados.csv');
 });
 
 app.listen(port, () => {
