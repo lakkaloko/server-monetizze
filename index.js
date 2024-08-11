@@ -1,4 +1,3 @@
-require('dotenv').config();
 const { google } = require('googleapis');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -6,6 +5,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Autenticação com a Service Account usando a variável de ambiente GOOGLE_CREDENTIALS
 const auth = new google.auth.GoogleAuth({
     credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -13,6 +13,7 @@ const auth = new google.auth.GoogleAuth({
 
 const sheets = google.sheets({ version: 'v4', auth });
 
+// Carregar o ID da planilha da variável de ambiente
 const spreadsheetId = process.env.SPREADSHEET_ID;
 
 const appendToGoogleSheet = async (data) => {
@@ -50,7 +51,7 @@ const appendToGoogleSheet = async (data) => {
         data.plano.nome || 'N/A',
         data.plano.quantidade || 'N/A',
         data.plano.sku || 'N/A',
-        data.produtos[0].produto || 'N/A', // Se houver vários produtos, você pode precisar ajustar isso
+        data.produtos[0].produto || 'N/A',
         data.produtos[0].codPlano || 'N/A',
         data.produtos[0].chave || 'N/A',
         data.produtos[0].nome || 'N/A',
@@ -66,7 +67,7 @@ const appendToGoogleSheet = async (data) => {
         data.produtos[0].categoria || 'N/A',
         data.produtos[0].membertizze || 'N/A',
         data.produtos[0].sku || 'N/A',
-        data.comissoes[0].nome || 'N/A', // Similar ao produto, para múltiplas comissões, ajuste conforme necessário
+        data.comissoes[0].nome || 'N/A',
         data.comissoes[0].tipo_comissao || 'N/A',
         data.comissoes[0].valor || 'N/A',
         data.comissoes[0].porcentagem || 'N/A',
