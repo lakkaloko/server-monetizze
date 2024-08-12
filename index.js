@@ -16,6 +16,9 @@ const sheets = google.sheets({ version: 'v4', auth });
 // Carregar o ID da planilha da variável de ambiente
 const spreadsheetId = process.env.SPREADSHEET_ID;
 
+// Middleware para analisar o corpo das requisições como JSON
+app.use(bodyParser.json());
+
 // Função para adicionar uma linha na planilha do Google Sheets
 const appendToGoogleSheet = async (data) => {
     const linha = [
@@ -57,14 +60,18 @@ const appendToGoogleSheet = async (data) => {
     }
 };
 
-// Middleware para analisar o corpo das requisições como JSON
-app.use(bodyParser.json());
-
 // Rota para receber os postbacks
 app.post('/postback', (req, res) => {
+    console.log('Método da requisição:', req.method);
+    console.log('Cabeçalhos da requisição:', req.headers);
     console.log('Dados recebidos:', JSON.stringify(req.body, null, 2));
 
     const data = req.body;
+
+    if (!data || Object.keys(data).length === 0) {
+        console.error('Corpo da requisição está vazio ou não foi processado corretamente.');
+        return res.status(400).send('Bad Request: Corpo da requisição vazio');
+    }
 
     appendToGoogleSheet(data);
 
