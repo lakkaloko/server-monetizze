@@ -16,6 +16,7 @@ const sheets = google.sheets({ version: 'v4', auth });
 // Carregar o ID da planilha da variável de ambiente
 const spreadsheetId = process.env.SPREADSHEET_ID;
 
+// Função para adicionar uma linha na planilha do Google Sheets
 const appendToGoogleSheet = async (data) => {
     const linha = [
         data.venda?.codigo || 'N/A',
@@ -56,11 +57,12 @@ const appendToGoogleSheet = async (data) => {
     }
 };
 
-
+// Middleware para analisar o corpo das requisições como JSON
 app.use(bodyParser.json());
 
+// Rota para receber os postbacks
 app.post('/postback', (req, res) => {
-    console.log('Dados recebidos:', req.body);
+    console.log('Dados recebidos:', JSON.stringify(req.body, null, 2));
 
     const data = req.body;
 
@@ -69,6 +71,7 @@ app.post('/postback', (req, res) => {
     res.status(200).send('Dados recebidos com sucesso');
 });
 
+// Iniciar o servidor
 app.listen(port, () => {
     console.log(`Servidor rodando na porta ${port}`);
 });
