@@ -5,6 +5,9 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Chave única da Monetizze definida como variável de ambiente
+const MONETIZZE_KEY = process.env.MONETIZZE_KEY;
+
 // Autenticação com a Service Account usando a variável de ambiente GOOGLE_CREDENTIALS
 const auth = new google.auth.GoogleAuth({
     credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
@@ -16,12 +19,10 @@ const sheets = google.sheets({ version: 'v4', auth });
 // Carregar o ID da planilha da variável de ambiente
 const spreadsheetId = process.env.SPREADSHEET_ID;
 
-// Middleware para analisar o corpo das requisições como JSON
-app.use(bodyParser.json());
-
 // Função para adicionar uma linha na planilha do Google Sheets
 const appendToGoogleSheet = async (data) => {
     const linha = [
+        data.chave_unica || 'N/A',  // Adiciona a chave única na primeira coluna
         data.venda?.codigo || 'N/A',
         data.venda?.valor || 'N/A',
         data.venda?.dataInicio || 'N/A',
@@ -60,6 +61,9 @@ const appendToGoogleSheet = async (data) => {
     }
 };
 
+// Middleware para analisar o corpo das requisições como JSON
+app.use(bodyParser.json());
+
 // Rota para receber os postbacks
 app.post('/postback', (req, res) => {
     console.log('Método da requisição:', req.method);
@@ -67,6 +71,12 @@ app.post('/postback', (req, res) => {
     console.log('Dados recebidos:', JSON.stringify(req.body, null, 2));
 
     const data = req.body;
+
+    // Verificar se a chave única no postback corresponde à chave configurada
+    if (data.chave_unica !== MONETIZZE_KEY) {
+        console.error('Chave única inválida!');
+        return res.status(403).send('Forbidden: Chave única inválida');
+    }
 
     if (!data || Object.keys(data).length === 0) {
         console.error('Corpo da requisição está vazio ou não foi processado corretamente.');
